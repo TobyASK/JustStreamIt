@@ -1,0 +1,140 @@
+/**
+ * ===== HELPERS UI =====
+ * Fonctions utilitaires pour la création et la gestion des éléments de l'interface
+ */
+
+/**
+ * Crée une carte film pour l'affichage dans une grille responsive
+ * La carte est entièrement cliquable et ouvre la modale de détails
+ * 
+ * Classes responsive Bootstrap:
+ * - col-6 : Mobile (2 cartes par ligne)
+ * - col-md-3 : Tablette (4 cartes par ligne) 
+ * - col-lg-2 : Desktop (6 cartes par ligne)
+ * 
+ * @param {Object} movie - Objet film contenant id, title, image_url/poster_url
+ * @returns {HTMLElement} - Élément div contenant la carte complète
+ */
+export function movieCard(movie) {
+  const col = document.createElement("div");
+  col.className = "col-6 col-md-3 col-lg-2"; // Classes responsive 2/4/6
+  
+  // URL de l'image placeholder utilisée en cas d'erreur
+  // Data URL avec image grise "Image non disponible"
+  const placeholder = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDUwIj48cmVjdCBmaWxsPSIjZGRkIiB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIvPjx0ZXh0IGZpbGw9IiM5OTkiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB4PSI1MCUiIHk9IjUwJSIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkltYWdlIG5vbiBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg==";
+  
+  // Sélection de l'image : image_url en priorité, sinon poster_url, sinon placeholder
+  let imgSrc = placeholder;
+  if (movie.image_url && String(movie.image_url).trim() !== "") {
+    imgSrc = movie.image_url;
+  } else if (movie.poster_url && String(movie.poster_url).trim() !== "") {
+    imgSrc = movie.poster_url;
+  }
+  
+  const title = movie.title || "Film sans titre";
+
+  // Construction HTML de la carte avec balise img standard
+  col.innerHTML = `
+    <div class="card h-100" data-open-details data-movie-id="${movie.id}">
+      <img src="${imgSrc}" class="card-img-top" alt="${title}" 
+           onerror="this.onerror=null; this.src='${placeholder}';" />
+      <div class="card-body d-flex flex-column">
+        <h3 class="card-title" data-open-details data-movie-id="${movie.id}">${title}</h3>
+        <button class="btn btn-primary btn-sm btn-details mt-auto" data-open-details data-movie-id="${movie.id}">Détails</button>
+      </div>
+    </div>`;
+  
+  return col;
+}
+
+/**
+ * Vide un élément DOM de tous ses enfants
+ * Utilisé pour nettoyer les grilles avant de les remplir à nouveau
+ * 
+ * @param {HTMLElement} el - Élément à vider
+ */
+export function clear(el) {
+  while(el.firstChild) {
+    el.removeChild(el.firstChild);
+  }
+}
+
+/**
+ * Applique la visibilité responsive initiale aux cartes d'une grille (2/4/6)
+ * et retourne une fonction toggle pour "Voir plus" / "Voir moins"
+ * 
+ * Logique responsive:
+ * - Mobile (<768px) : 2 cartes visibles
+ * - Tablette (≥768px et <992px) : 4 cartes visibles
+ * - Desktop (≥992px) : 6 cartes visibles
+ * 
+ * La fonction retournée permet de basculer entre l'état réduit et étendu:
+ * - État réduit : affiche le nombre par défaut (2/4/6 selon breakpoint)
+ * - État étendu : affiche toutes les cartes
+ * 
+ * @param {HTMLElement} gridEl - Grille contenant les cartes (div.row)
+ * @returns {Function} - Fonction toggle(extra) pour révéler/masquer des cartes
+ */
+export function applyVisibility(gridEl) {
+  const cards = [...gridEl.children];
+  const mqLg = window.matchMedia("(min-width: 992px)");
+  const mqMd = window.matchMedia("(min-width: 768px)");
+
+  // Déterminer combien de cartes afficher par défaut selon la taille d'écran
+  const defaultVisible = mqLg.matches ? 6 : mqMd.matches ? 4 : 2;
+  // Si on a moins de cartes que le défaut, afficher toutes les cartes disponibles
+  let visible = Math.min(defaultVisible, cards.length);
+
+  // Stocker l'état dans des attributs data-* pour pouvoir le lire depuis main.js
+  gridEl.dataset.defaultVisible = String(defaultVisible);
+  gridEl.dataset.total = String(cards.length);
+  gridEl.dataset.expanded = "false"; // État initial: réduit
+
+  // Fonction interne pour appliquer la visibilité
+  // Utilise opacity et pointer-events au lieu de display:none
+  const apply = () => {
+    cards.forEach((c, i) => {
+      if (i < visible) {
+        c.style.opacity = '1';
+        c.style.pointerEvents = 'auto';
+        c.style.position = 'relative';
+      } else {
+        c.style.opacity = '0';
+        c.style.pointerEvents = 'none';
+        c.style.position = 'absolute';
+        c.style.left = '-9999px';
+      }
+    });
+    gridEl.dataset.visible = String(visible);
+  };
+
+  apply(); // Appliquer l'état initial
+
+  /**
+   * Fonction toggle retournée
+   * - Si réduit: révèle progressivement jusqu'à tout afficher
+   * - Si étendu: revient à l'affichage par défaut (2/4/6)
+   * 
+   * @param {number} extra - Nombre de cartes supplémentaires à révéler (par défaut 2)
+   */
+  return (extra = 2) => {
+    const total = cards.length;
+    const expanded = gridEl.dataset.expanded === "true";
+    
+    if (expanded) {
+      // Si tout est affiché, revenir à l'état par défaut
+      visible = defaultVisible;
+      gridEl.dataset.expanded = "false";
+    } else {
+      // Sinon, révéler plus de cartes
+      visible = Math.min(visible + extra, total);
+      // Si on atteint le total, marquer comme étendu
+      if (visible >= total) {
+        gridEl.dataset.expanded = "true";
+      }
+    }
+    apply();
+  };
+}
+
+
