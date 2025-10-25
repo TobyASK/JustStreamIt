@@ -127,6 +127,11 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
+# Configuration pour servir le frontend JustStreamIt
+STATICFILES_DIRS = [
+    BASE_DIR / "juststreamit-frontend",
+]
+
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 5,

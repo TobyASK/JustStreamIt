@@ -1,21 +1,9 @@
-/**
- * ===== RENDU DES SECTIONS =====
- * Fonctions pour remplir chaque section de la page:
- * - Meilleur film (bannière avec résumé détaillé)
- * - Films les mieux notés (top global hors le meilleur)
- * - Catégories par genre (Mystery, Drama, Autres)
- */
+// Fonctions pour remplir les différentes sections de la page
 
 import { fetchTop, fetchByGenre, fetchDetails, GENRES, fetchAllGenres } from "./api.js";
 import { movieCard, clear, applyVisibility } from "./ui.js";
 
-/**
- * Remplit la bannière "Meilleur film" avec le film ayant le meilleur score IMDB
- * Étapes:
- * 1. Récupère le top 1 via fetchTop (premier résultat)
- * 2. Affiche l'image, le titre et un bouton "Voir les détails"
- * 3. Charge le résumé complet via fetchDetails (endpoint /titles/{id})
- */
+// Affiche le meilleur film en haut de page
 export async function renderBest() {
   const banner = document.getElementById("best-movie-content");
   clear(banner);

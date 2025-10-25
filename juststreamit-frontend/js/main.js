@@ -1,29 +1,13 @@
-/**
- * ===== POINT D'ENTRÉE PRINCIPAL =====
- * Orchestration générale de l'application JustStreamIt
- * Gère l'initialisation, les événements utilisateur et la modale de détails
- */
+// Point d'entrée de l'application JustStreamIt
+// Gère le chargement initial et les événements
 
 import { renderBest, renderTop, renderCategory, initOthers } from "./sections.js";
 import { fetchDetails } from "./api.js";
 
-// Handlers "Voir plus/moins" pour chaque section (stockés globalement)
+// Handlers pour les boutons "Voir plus/moins"
 let showMoreTop, showMoreCat1, showMoreCat2, showMoreOthers;
 
-/**
- * Ouvre la modale Bootstrap et affiche les détails complets d'un film
- * Récupère les données via l'API et remplit tous les champs requis
- * 
- * Informations affichées:
- * - Image, titre, genres complets
- * - Date de sortie, classification (ex: 12+), score IMDB
- * - Réalisateur(s), acteurs principaux
- * - Durée, pays d'origine
- * - Recettes box-office (worldwide ou USA)
- * - Résumé détaillé
- * 
- * @param {number|string} id - Identifiant unique du film
- */
+// Ouvre la modale avec les détails d'un film
 async function openDetails(id) {
   try {
     const data = await fetchDetails(id);
