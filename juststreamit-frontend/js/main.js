@@ -98,63 +98,53 @@ function delegateDetailsClicks(root = document) {
   });
 }
 
-/**
- * Connecte les boutons "Voir plus" de chaque section à leurs handlers respectifs
- * Gère aussi le changement de label "Voir plus" ↔ "Voir moins"
- */
 function wireMoreButtons() {
-  /**
-   * Met à jour le texte du bouton selon l'état de la grille (étendu ou réduit)
-   * @param {string} btnId - ID du bouton
-   * @param {string} gridId - ID de la grille correspondante
-   */
-  const updateLabel = (btnId, gridId) => {
-    const btn = document.getElementById(btnId);
+  // Lie les boutons "Voir plus" et "Voir moins" à leurs handlers
+  const bindPair = (moreId, lessId, gridId, handlerGetter) => {
+    const btnMore = document.getElementById(moreId);
+    const btnLess = document.getElementById(lessId);
     const grid = document.getElementById(gridId);
-    if (!btn || !grid) return;
-    const expanded = grid.dataset.expanded === "true";
-    btn.textContent = expanded ? "Voir moins" : "Voir plus";
-  };
-
-  /**
-   * Lie un bouton à sa grille et son handler
-   * @param {string} btnId - ID du bouton
-   * @param {string} gridId - ID de la grille
-   * @param {Function} handlerGetter - Fonction retournant le handler showMore
-   */
-  const bind = (btnId, gridId, handlerGetter) => {
-    const btn = document.getElementById(btnId);
-    btn.onclick = () => {
+    
+    if (!btnMore || !btnLess || !grid) return;
+    
+    const updateButtons = () => {
       const handler = handlerGetter();
-      if (handler) handler(2); // Révéler 2 cartes supplémentaires à chaque clic
-      updateLabel(btnId, gridId);
+      if (!handler) return;
+      
+      const state = handler.getState();
+      // Afficher "Voir plus" seulement s'il reste des films à montrer
+      btnMore.style.display = state.canShowMore ? "inline-block" : "none";
+      // Afficher "Voir moins" seulement si on est au-dessus du minimum
+      btnLess.style.display = state.canShowLess ? "inline-block" : "none";
     };
+    
+    // Clic sur "Voir plus"
+    btnMore.onclick = async () => {
+      const handler = handlerGetter();
+      if (handler) {
+        await handler.more();
+        updateButtons();
+      }
+    };
+    
+    // Clic sur "Voir moins"
+    btnLess.onclick = () => {
+      const handler = handlerGetter();
+      if (handler) {
+        handler.less();
+        updateButtons();
+      }
+    };
+    
+    // État initial
+    updateButtons();
   };
 
-  // Connecter les 4 boutons "Voir plus" à leurs grilles respectives
-  bind("btn-show-more-top", "top-rated-grid", () => showMoreTop);
-  bind("btn-show-more-cat1", "category-1-grid", () => showMoreCat1);
-  bind("btn-show-more-cat2", "category-2-grid", () => showMoreCat2);
-  bind("btn-show-more-others", "others-grid", () => showMoreOthers);
-  
-  // Masquer les boutons pour les sections sans films ou avec moins de films que le seuil
-  ["top-rated-grid", "category-1-grid", "category-2-grid", "others-grid"].forEach((gridId, idx) => {
-    const grid = document.getElementById(gridId);
-    const btnIds = ["btn-show-more-top", "btn-show-more-cat1", "btn-show-more-cat2", "btn-show-more-others"];
-    const btn = document.getElementById(btnIds[idx]);
-    if (!grid || !btn) return;
-    
-    // Masquer si: section vide, erreur, ou nombre de films ≤ seuil par défaut
-    const hasError = grid.querySelector('.text-muted, .text-danger');
-    const totalCards = parseInt(grid.dataset.total || "0", 10);
-    const defaultVisible = parseInt(grid.dataset.defaultVisible || "6", 10);
-    
-    if (hasError || grid.children.length === 0 || totalCards <= defaultVisible) {
-      btn.style.display = "none";
-    } else {
-      btn.style.display = "";
-    }
-  });
+  // Connecter les 4 paires de boutons
+  bindPair("btn-show-more-top", "btn-show-less-top", "top-rated-grid", () => showMoreTop);
+  bindPair("btn-show-more-cat1", "btn-show-less-cat1", "category-1-grid", () => showMoreCat1);
+  bindPair("btn-show-more-cat2", "btn-show-less-cat2", "category-2-grid", () => showMoreCat2);
+  bindPair("btn-show-more-others", "btn-show-less-others", "others-grid", () => showMoreOthers);
 }
 
 /**

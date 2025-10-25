@@ -39,60 +39,69 @@ export function clear(el) {
 
 // Gère l'affichage responsive des cartes (2/4/6 selon la taille d'écran)
 // Retourne une fonction pour le bouton "Voir plus/moins"
-export function applyVisibility(gridEl) {
-  const cards = [...gridEl.children];
+export function applyVisibility(gridEl, fetchFn = null) {
   const mqLg = window.matchMedia("(min-width: 992px)");
   const mqMd = window.matchMedia("(min-width: 768px)");
 
   const defaultVisible = mqLg.matches ? 6 : mqMd.matches ? 4 : 2;
-  let visible = Math.min(defaultVisible, cards.length);
+  let visible = Math.min(defaultVisible, gridEl.children.length);
 
   gridEl.dataset.defaultVisible = String(defaultVisible);
-  gridEl.dataset.total = String(cards.length);
+  gridEl.dataset.visible = String(visible);
   gridEl.dataset.expanded = "false";
 
   const apply = () => {
+    const cards = [...gridEl.children];
     cards.forEach((c, i) => {
       if (i < visible) {
-        c.style.opacity = '1';
-        c.style.pointerEvents = 'auto';
-        c.style.position = 'relative';
+        c.style.display = '';
       } else {
-        c.style.opacity = '0';
-        c.style.pointerEvents = 'none';
-        c.style.position = 'absolute';
-        c.style.left = '-9999px';
+        c.style.display = 'none';
       }
     });
     gridEl.dataset.visible = String(visible);
   };
 
-  apply(); // Appliquer l'état initial
+  apply();
 
-  /**
-   * Fonction toggle retournée
-   * - Si réduit: révèle progressivement jusqu'à tout afficher
-   * - Si étendu: revient à l'affichage par défaut (2/4/6)
-   * 
-   * @param {number} extra - Nombre de cartes supplémentaires à révéler (par défaut 2)
-   */
-  return (extra = 2) => {
-    const total = cards.length;
-    const expanded = gridEl.dataset.expanded === "true";
-    
-    if (expanded) {
-      // Si tout est affiché, revenir à l'état par défaut
-      visible = defaultVisible;
-      gridEl.dataset.expanded = "false";
-    } else {
-      // Sinon, révéler plus de cartes
-      visible = Math.min(visible + extra, total);
-      // Si on atteint le total, marquer comme étendu
-      if (visible >= total) {
-        gridEl.dataset.expanded = "true";
+  // Fonction pour afficher plus ou moins de films
+  return {
+    more: async () => {
+      const currentCards = gridEl.children.length;
+      const hasMore = gridEl.dataset.hasMore !== 'false';
+      
+      // Si on a déjà assez de cartes cachées, les révéler
+      if (visible < currentCards) {
+        visible = Math.min(visible + 6, currentCards);
+        apply();
       }
+      // Sinon, charger plus de films depuis l'API si disponible
+      else if (hasMore && fetchFn) {
+        const { loadMoreFilms } = await import("./sections.js");
+        const added = await loadMoreFilms(gridEl, 6);
+        if (added > 0) {
+          visible += added;
+          apply();
+        }
+      }
+    },
+    less: () => {
+      const defaultVis = parseInt(gridEl.dataset.defaultVisible) || defaultVisible;
+      visible = Math.max(visible - 6, defaultVis);
+      apply();
+    },
+    getState: () => {
+      const currentCards = gridEl.children.length;
+      const hasMore = gridEl.dataset.hasMore !== 'false';
+      
+      return {
+        visible,
+        total: currentCards,
+        defaultVisible: parseInt(gridEl.dataset.defaultVisible) || defaultVisible,
+        canShowMore: visible < currentCards || hasMore,
+        canShowLess: visible > (parseInt(gridEl.dataset.defaultVisible) || defaultVisible)
+      };
     }
-    apply();
   };
 }
 

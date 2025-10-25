@@ -3,6 +3,54 @@
 import { fetchTop, fetchByGenre, fetchDetails, GENRES, fetchAllGenres } from "./api.js";
 import { movieCard, clear, applyVisibility } from "./ui.js";
 
+// Fonction pour charger plus de films progressivement
+export async function loadMoreFilms(gridEl, count = 6) {
+  const currentPage = parseInt(gridEl.dataset.currentPage) || 1;
+  const genre = gridEl.dataset.genre;
+  const isTop = gridEl.dataset.isTop === 'true';
+  
+  const loaded = [];
+  let page = currentPage;
+  
+  try {
+    // Charger jusqu'à obtenir 'count' films
+    while (loaded.length < count) {
+      const data = isTop 
+        ? await fetchTop(page)
+        : await fetchByGenre(genre, page);
+      
+      if (data.results && data.results.length > 0) {
+        loaded.push(...data.results);
+        
+        if (!data.next) {
+          // Plus de pages disponibles
+          gridEl.dataset.hasMore = 'false';
+          break;
+        }
+        page++;
+      } else {
+        gridEl.dataset.hasMore = 'false';
+        break;
+      }
+    }
+    
+    // Ajouter les films chargés au DOM
+    const toAdd = loaded.slice(0, count);
+    toAdd.forEach(movie => {
+      gridEl.appendChild(movieCard(movie));
+    });
+    
+    // Mettre à jour la page courante
+    gridEl.dataset.currentPage = String(page);
+    
+    return toAdd.length;
+  } catch (error) {
+    console.error("Erreur lors du chargement de films supplémentaires:", error);
+    gridEl.dataset.hasMore = 'false';
+    return 0;
+  }
+}
+
 // Affiche le meilleur film en haut de page
 export async function renderBest() {
   const banner = document.getElementById("best-movie-content");
@@ -44,45 +92,39 @@ export async function renderBest() {
   }
 }
 
-/**
- * Fonction générique pour remplir une grille avec des films
- * Récupère suffisamment de pages pour avoir au moins 12 films à afficher
- * 
- * @param {HTMLElement} gridEl - Grille à remplir (div.row)
- * @param {Function} fetchPageFn - Fonction de fetch prenant (page) en paramètre
- * @param {number} pagesNeeded - Nombre max de pages à récupérer (par défaut 3)
- */
-async function fillGrid(gridEl, fetchPageFn, pagesNeeded = 3) {
+// Fonction générique pour remplir une grille avec des films
+async function fillGrid(gridEl, fetchPageFn, initialCount = 12) {
   clear(gridEl);
   const items = [];
+  let hasMorePages = false;
   
   try {
-    // Récupérer plusieurs pages jusqu'à avoir au moins 12 films
-    for (let page = 1; page <= pagesNeeded; page++) {
+    let page = 1;
+    while (items.length < initialCount) {
       try {
         const data = await fetchPageFn(page);
-        if (data.results) {
+        if (data.results && data.results.length > 0) {
           items.push(...data.results);
+          hasMorePages = !!data.next;
+          if (!data.next) break;
+          page++;
+        } else {
+          break;
         }
-        // Arrêter si on a assez de films OU si la page ne contient aucun résultat
-        if (items.length >= 12 || !data.results || data.results.length === 0) break;
-        // Arrêter aussi si on a récupéré tous les films disponibles (pas de page suivante)
-        if (!data.next) break;
       } catch (pageError) {
-        // Si une page spécifique échoue (ex: "Invalid page"), arrêter la pagination
-        // mais garder les films déjà récupérés
-        console.warn(`Page ${page} non disponible, arrêt de la pagination:`, pageError);
+        console.warn(`Page ${page} non disponible:`, pageError);
         break;
       }
     }
     
-    // Prendre les 12 premiers films et créer leurs cartes
-    // Si moins de 12 films disponibles, afficher ce qu'on a
-    items.slice(0, 12).forEach(movie => {
+    items.slice(0, initialCount).forEach(movie => {
       gridEl.appendChild(movieCard(movie));
     });
     
-    // Si aucun film trouvé, afficher un message
+    // Stocker pour charger plus tard
+    gridEl.dataset.currentPage = String(page);
+    gridEl.dataset.hasMore = String(hasMorePages);
+    
     if (items.length === 0) {
       gridEl.innerHTML = '<div class="col-12"><p class="text-muted">Aucun film disponible pour ce genre</p></div>';
     }
@@ -92,39 +134,43 @@ async function fillGrid(gridEl, fetchPageFn, pagesNeeded = 3) {
   }
 }
 
-/**
- * Remplit la grille "Films les mieux notés" (top global hors le meilleur)
- * Exclut le premier film car il est déjà affiché dans "Meilleur film"
- * 
- * @returns {Function} - Handler showMore pour "Voir plus/moins"
- */
+// Affiche les films les mieux notés (en excluant le meilleur déjà affiché)
 export async function renderTop() {
   const grid = document.getElementById("top-rated-grid");
   
-  // Récupérer les films en excluant le premier (déjà affiché dans "Meilleur film")
   const items = [];
+  let hasMorePages = false;
+  
   try {
-    for (let page = 1; page <= 3; page++) {
+    let page = 1;
+    // Charger initialement 13 films (pour en avoir 12 après skip)
+    while (items.length < 13) {
       const data = await fetchTop(page);
-      if (data.results) {
+      if (data.results && data.results.length > 0) {
         items.push(...data.results);
+        hasMorePages = !!data.next;
+        if (!data.next) break;
+        page++;
+      } else {
+        break;
       }
-      // +1 car on va skip le premier film
-      if (items.length >= 13) break;
     }
     
     clear(grid);
-    // Skip le premier film (c'est le meilleur, déjà affiché)
+    // Skip le premier film (déjà dans "Meilleur film")
     items.slice(1, 13).forEach(movie => {
       grid.appendChild(movieCard(movie));
     });
+    
+    grid.dataset.currentPage = String(page);
+    grid.dataset.isTop = 'true';
+    grid.dataset.hasMore = String(hasMorePages);
   } catch (error) {
     console.error("Erreur lors du chargement du top:", error);
     grid.innerHTML = '<div class="col-12"><p class="text-danger">Erreur lors du chargement</p></div>';
   }
   
-  // Appliquer la visibilité responsive et retourner le handler toggle
-  return applyVisibility(grid);
+  return applyVisibility(grid, fetchTop);
 }
 
 /**
@@ -137,13 +183,17 @@ export async function renderTop() {
  */
 export async function renderCategory(sectionId, genre) {
   const grid = document.getElementById(`${sectionId}-grid`);
+  
+  // Stocker le genre dans le dataset pour le chargement progressif
+  grid.dataset.genre = genre;
+  
   // Remplir la grille avec les meilleurs films du genre
   await fillGrid(grid, (page) => fetchByGenre(genre, page));
   
   // Si la grille a des films, appliquer la visibilité et retourner le handler
   // Sinon retourner une fonction vide pour éviter les erreurs
   if (grid.children.length > 0 && !grid.querySelector('.text-muted, .text-danger')) {
-    return applyVisibility(grid);
+    return applyVisibility(grid, (page) => fetchByGenre(genre, page));
   } else {
     // Retourner une fonction vide si pas de films
     return () => {};
