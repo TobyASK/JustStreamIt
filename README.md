@@ -28,8 +28,8 @@ Interface sombre assez simple, avec des cartes qui réagissent au survol. Quand 
 
 1. **Cloner le dépôt**
 ```bash
-git clone https://github.com/OpenClassrooms-Student-Center/OCMovies-API-EN-FR.git
-cd OCMovies-API-EN-FR
+git clone https://github.com/TobyASK/JustStreamIt.git
+cd JustStreamIt
 ```
 
 2. **Créer l'environnement virtuel**
