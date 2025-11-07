@@ -19,10 +19,8 @@ def serve_frontend(request, path=''):
         file_path = os.path.join(
             settings.BASE_DIR, 'juststreamit-frontend', path
         )
-    
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return FileResponse(open(file_path, 'rb'))
-    
     # Si le fichier n'existe pas, rediriger vers index.html (pour SPA)
     index_path = os.path.join(
         settings.BASE_DIR, 'juststreamit-frontend', 'index.html'
@@ -34,10 +32,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/genres/', include('api.v1.genres.urls')),
     path('api/v1/titles/', include('api.v1.titles.urls')),
-    
     # Redirection de la racine vers le frontend
     path('', RedirectView.as_view(url='/index.html', permanent=False)),
-    
     # Servir les fichiers du frontend
     path('<path:path>', serve_frontend),
 ]
