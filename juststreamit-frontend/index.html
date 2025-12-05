@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="JustStreamIt - Découvrez les meilleurs films classés par catégorie et note IMDb">
     <title>JustStreamIt - Les Meilleurs Films</title>
     
     <!-- Bootstrap 5 CSS -->
@@ -13,17 +14,17 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="bg-dark text-white py-3 mb-4">
+    <header class="bg-dark text-white py-4 mb-4">
         <div class="container">
             <h1 class="h2 mb-0">JustStreamIt</h1>
-            <p class="mb-0 text-muted">Les meilleurs films sélectionnés pour vous</p>
+            <p class="mb-0">Les meilleurs films sélectionnés pour vous</p>
         </div>
     </header>
 
     <main class="container">
         <!-- Section: Meilleur Film -->
-        <section id="best-movie" class="mb-5">
-            <h2 class="h3 mb-3">Meilleur Film</h2>
+        <section id="best-movie" class="mb-5" aria-labelledby="best-movie-heading">
+            <h2 id="best-movie-heading" class="h3 mb-3">Meilleur Film</h2>
             <div id="best-movie-content" class="row">
                 <div class="col-12 text-center">
                     <div class="spinner-border" role="status">
@@ -34,68 +35,75 @@
         </section>
 
         <!-- Section: Films les mieux notés -->
-        <section id="top-rated" class="mb-5">
-            <h2 class="h3 mb-3">Films les mieux notés</h2>
-            <div id="top-rated-grid" class="row g-3">
+        <section id="top-rated" class="mb-5" aria-labelledby="top-rated-heading">
+            <h2 id="top-rated-heading" class="h3 mb-3">Films les mieux notés</h2>
+            <div id="top-rated-grid" class="row g-3" role="list" aria-label="Liste des films les mieux notés">
                 <!-- Cards will be inserted here -->
             </div>
             <div class="text-center mt-3">
-                <button id="btn-show-more-top" class="btn btn-outline-primary me-2">Voir plus</button>
-                <button id="btn-show-less-top" class="btn btn-outline-secondary" style="display: none;">Voir moins</button>
+                <button id="btn-show-more-top" class="btn btn-outline-primary me-2" aria-expanded="false">Voir plus</button>
+                <button id="btn-show-less-top" class="btn btn-outline-secondary" style="display: none;" aria-expanded="true">Voir moins</button>
             </div>
         </section>
 
         <!-- Section: Catégorie 1 - Mystery -->
-        <section id="category-1" class="mb-5">
-            <h2 class="h3 mb-3">Mystery</h2>
-            <div id="category-1-grid" class="row g-3">
+        <section id="category-1" class="mb-5" aria-labelledby="category-1-heading">
+            <h2 id="category-1-heading" class="h3 mb-3">Mystery</h2>
+            <div id="category-1-grid" class="row g-3" role="list" aria-label="Liste des films Mystery">
                 <!-- Cards will be inserted here -->
             </div>
             <div class="text-center mt-3">
-                <button id="btn-show-more-cat1" class="btn btn-outline-primary me-2">Voir plus</button>
-                <button id="btn-show-less-cat1" class="btn btn-outline-secondary" style="display: none;">Voir moins</button>
+                <button id="btn-show-more-cat1" class="btn btn-outline-primary me-2" aria-expanded="false">Voir plus</button>
+                <button id="btn-show-less-cat1" class="btn btn-outline-secondary" style="display: none;" aria-expanded="true">Voir moins</button>
             </div>
         </section>
 
         <!-- Section: Catégorie 2 - Drama -->
-        <section id="category-2" class="mb-5">
-            <h2 class="h3 mb-3">Drama</h2>
-            <div id="category-2-grid" class="row g-3">
+        <section id="category-2" class="mb-5" aria-labelledby="category-2-heading">
+            <h2 id="category-2-heading" class="h3 mb-3">Drama</h2>
+            <div id="category-2-grid" class="row g-3" role="list" aria-label="Liste des films Drama">
                 <!-- Cards will be inserted here -->
             </div>
             <div class="text-center mt-3">
-                <button id="btn-show-more-cat2" class="btn btn-outline-primary me-2">Voir plus</button>
-                <button id="btn-show-less-cat2" class="btn btn-outline-secondary" style="display: none;">Voir moins</button>
+                <button id="btn-show-more-cat2" class="btn btn-outline-primary me-2" aria-expanded="false">Voir plus</button>
+                <button id="btn-show-less-cat2" class="btn btn-outline-secondary" style="display: none;" aria-expanded="true">Voir moins</button>
             </div>
         </section>
 
         <!-- Section: Autres (Genre dynamique) -->
-        <section id="others" class="mb-5">
+        <section id="others" class="mb-5" aria-labelledby="others-heading">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h3 mb-0">Autres</h2>
+                <h2 id="others-heading" class="h3 mb-0">Autres</h2>
                 <div>
-                    <label for="genre-select" class="form-label me-2 mb-0">Genre:</label>
-                    <select id="genre-select" class="form-select d-inline-block w-auto">
+                    <label for="genre-select" class="form-label me-2 mb-0">Genre :</label>
+                    <select id="genre-select" class="form-select d-inline-block w-auto" aria-describedby="genre-help">
                         <option value="">Chargement...</option>
                     </select>
                 </div>
             </div>
-            <div id="others-grid" class="row g-3">
+            <div id="others-grid" class="row g-3" role="list" aria-label="Liste des films par genre">
                 <!-- Cards will be inserted here -->
             </div>
             <div class="text-center mt-3">
-                <button id="btn-show-more-others" class="btn btn-outline-primary me-2">Voir plus</button>
-                <button id="btn-show-less-others" class="btn btn-outline-secondary" style="display: none;">Voir moins</button>
+                <button id="btn-show-more-others" class="btn btn-outline-primary me-2" aria-expanded="false">Voir plus</button>
+                <button id="btn-show-less-others" class="btn btn-outline-secondary" style="display: none;" aria-expanded="true">Voir moins</button>
             </div>
         </section>
     </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-3 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 JustStreamIt - Projet OpenClassrooms</p>
+        </div>
+    </footer>
 
     <!-- Modal de détails -->
     <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="detailsModalLabel">Détails du film</h5>
+                    <h2 class="modal-title h5" id="detailsModalLabel">Détails du film</h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
                 <div class="modal-body">
