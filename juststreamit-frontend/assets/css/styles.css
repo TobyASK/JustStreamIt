@@ -1,33 +1,144 @@
-/* Custom Styles for JustStreamIt */
+/* JustStreamIt - Style moderne inspiré streaming */
 
-/* General */
+/* Variables CSS */
+:root {
+    --bg-dark: #0d0d0d;
+    --bg-card: #1a1a1a;
+    --bg-section: #141414;
+    --accent: #e50914;
+    --accent-hover: #f40612;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --text-muted: #808080;
+    --border-color: #333;
+    --shadow-color: rgba(0, 0, 0, 0.8);
+    --gradient-overlay: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 100%);
+}
+
+/* Reset & Base */
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: system-ui, -apple-system, sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Header */
+header {
+    background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%) !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+header h1 {
+    color: var(--accent) !important;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+}
+
+header p {
+    color: var(--text-secondary) !important;
+    font-size: 0.9rem;
+}
+
+/* Main Container */
+main.container {
+    max-width: 1400px;
+    padding-top: 1rem;
+}
+
+/* Section Styling */
+section {
+    background: var(--bg-section);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+section h2 {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.4rem;
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+section h2::before {
+    content: '';
+    width: 4px;
+    height: 24px;
+    background: var(--accent);
+    border-radius: 2px;
 }
 
 /* Movie Cards */
-.card-img-top {
-    object-fit: cover;
-    height: 240px;
-    width: 100%;
-    background-color: #e9ecef;
-    display: block;
+.card {
+    background: var(--bg-card);
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
 }
 
-.card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    height: 100%;
+.card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-overlay);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px var(--shadow-color);
+    z-index: 10;
+}
+
+.card:hover::after {
+    opacity: 1;
+}
+
+.card-img-top {
+    object-fit: cover;
+    height: 280px;
+    width: 100%;
+    background-color: var(--bg-card);
+    display: block;
+    transition: filter 0.3s ease;
+}
+
+.card:hover .card-img-top {
+    filter: brightness(0.7);
+}
+
+.card-body {
+    background: linear-gradient(0deg, var(--bg-card) 0%, transparent 100%);
+    padding: 1rem;
+    position: relative;
+    z-index: 1;
 }
 
 .card-title {
     font-size: 0.9rem;
     font-weight: 600;
+    color: var(--text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -35,101 +146,295 @@ body {
     line-clamp: 2;
     -webkit-box-orient: vertical;
     min-height: 2.4em;
+    margin-bottom: 0.75rem;
+}
+
+/* Card Detail Button */
+.btn-details {
+    background: var(--accent);
+    border: none;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-details:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+    color: white;
 }
 
 /* Best Movie Section */
+#best-movie {
+    background: linear-gradient(135deg, var(--bg-section) 0%, #1f1f1f 100%);
+    border: 1px solid var(--border-color);
+}
+
 #best-movie-content .best-movie-img {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 8px 40px var(--shadow-color);
+    transition: transform 0.3s ease;
+}
+
+#best-movie-content .best-movie-img:hover {
+    transform: scale(1.02);
+}
+
+.best-movie-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
 #best-summary {
     max-height: 6.5em;
     overflow: hidden;
-    line-height: 1.6em;
+    line-height: 1.7em;
+    color: var(--text-secondary);
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 4;
     line-clamp: 4;
     -webkit-box-orient: vertical;
+    font-size: 1rem;
 }
 
-.best-movie-title {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
+/* Buttons - Voir plus/moins */
+.btn-outline-primary {
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
 }
 
-/* Modal */
+.btn-outline-primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 2px solid var(--text-muted);
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--text-muted);
+    border-color: var(--text-muted);
+    color: var(--bg-dark);
+}
+
+/* Best Movie Primary Button */
+#best-movie .btn-primary {
+    background: var(--accent);
+    border: none;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+#best-movie .btn-primary:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(229, 9, 20, 0.5);
+}
+
+/* Genre Select */
+#genre-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    min-width: 180px;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+#genre-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
+    outline: none;
+}
+
+#genre-select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+#others .form-label {
+    color: var(--text-secondary);
+}
+
+/* Modal Styling */
+.modal-content {
+    background: var(--bg-section);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-section) 100%);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+}
+
+.modal-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    background: var(--bg-section);
+}
+
 .modal-body img {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 1rem;
+    box-shadow: 0 4px 20px var(--shadow-color);
 }
 
 .modal-body .info-label {
     font-weight: 600;
-    color: #6c757d;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .modal-body .info-value {
-    color: #212529;
+    color: var(--text-primary);
 }
 
-/* Responsive adjustments */
+/* Loading Spinner */
+.spinner-border {
+    color: var(--accent) !important;
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Responsive */
 @media (max-width: 575.98px) {
-    /* Mobile: 2 cards */
     .card-img-top {
-        height: 180px;
+        height: 200px;
     }
     
     .best-movie-title {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
+    }
+    
+    section {
+        padding: 1rem;
+        border-radius: 8px;
+    }
+    
+    section h2 {
+        font-size: 1.2rem;
+    }
+    
+    #best-movie-content .best-movie-img {
+        margin-bottom: 1rem;
     }
 }
 
 @media (min-width: 576px) and (max-width: 991.98px) {
-    /* Tablet: 4 cards - handled by Bootstrap col-md-3 */
     .card-img-top {
-        height: 200px;
+        height: 240px;
+    }
+    
+    .best-movie-title {
+        font-size: 2rem;
     }
 }
 
 @media (min-width: 992px) {
-    /* Desktop: 6 cards - handled by Bootstrap col-lg-2 */
+    .card-img-top {
+        height: 280px;
+    }
 }
 
-/* Button styling */
-.btn-details {
-    font-size: 0.85rem;
-    padding: 0.25rem 0.75rem;
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* Section titles */
-section h2 {
-    border-bottom: 2px solid #dee2e6;
-    padding-bottom: 0.5rem;
+.card {
+    animation: fadeIn 0.4s ease-out;
 }
 
-/* Genre select */
-#genre-select {
-    min-width: 150px;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
 }
 
-/* Loading states */
-.spinner-border {
-    color: #0d6efd;
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
 }
 
-/* Hidden state for visibility management */
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Focus States for Accessibility */
+a:focus, button:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Footer */
+footer {
+    background: var(--bg-section) !important;
+    border-top: 1px solid var(--border-color);
+}
+
+footer p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Hidden state */
 .d-none-custom {
     display: none !important;
-}
-
-/* Focus outline for accessibility */
-a, button {
-    outline-offset: 2px;
 }

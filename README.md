@@ -59,25 +59,23 @@ python manage.py create_db
 
 ## Lancement
 
-**Windows - fichier batch**
+**Windows - fichier batch (recommandé)**
 ```bash
 START-JUSTSTREAMIT.bat
 ```
 
-**Manuel (2 terminaux)**
-
-Terminal 1 :
+**Manuel**
 ```bash
+# Activer l'environnement virtuel
+env\Scripts\activate
+
+# Lancer le serveur Django (sert à la fois l'API et le frontend)
 python manage.py runserver 8000
 ```
 
-Terminal 2 :
-```bash
-cd juststreamit-frontend
-python -m http.server 5500
-```
+Ensuite ouvrir http://127.0.0.1:8000/
 
-Ensuite ouvrir http://localhost:5500
+**Note** : Le serveur Django sert à la fois l'API REST (`/api/v1/`) et les fichiers du frontend (page d'accueil sur `/`).
 
 ## Structure
 
