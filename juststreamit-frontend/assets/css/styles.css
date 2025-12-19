@@ -12,8 +12,8 @@
     --text-secondary: #b3b3b3;
     --text-muted: #808080;
     --border-color: #333;
-    --shadow-color: rgba(0, 0, 0, 0.8);
-    --gradient-overlay: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.85) 100%);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --gradient-overlay: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%);
     --glow: rgba(229, 9, 20, 0.2);
 }
 
@@ -34,13 +34,13 @@ body {
 
 /* Header */
 header {
-    background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%) !important;
+    background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%) !important;
     position: sticky;
     top: 0;
     z-index: 100;
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(229, 9, 20, 0.15);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 header h1 {
@@ -349,7 +349,7 @@ section h2::before {
     font-weight: 900;
     margin-bottom: 1rem;
     color: var(--text-primary);
-    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     letter-spacing: -1px;
     line-height: 1.1;
 }
@@ -570,7 +570,7 @@ section h2::before {
     border: 1px solid rgba(229, 9, 20, 0.2);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
