@@ -16,12 +16,27 @@
     <!-- Header -->
     <header class="bg-dark text-white py-4 mb-4">
         <div class="container">
-            <h1 class="h2 mb-0">JustStreamIt</h1>
-            <p class="mb-0">Les meilleurs films sélectionnés pour vous</p>
+            <h1 class="h2 mb-3">JustStreamIt</h1>
+            <p class="mb-3">Les meilleurs films sélectionnés pour vous</p>
+            
+            <!-- Barre de recherche -->
+            <div class="search-bar">
+                <input type="text" id="search-input" class="form-control" placeholder="Rechercher un film...">
+                <button id="search-btn" class="btn btn-primary">Rechercher</button>
+                <button id="clear-search-btn" class="btn btn-secondary" style="display: none;">Revenir à l'accueil</button>
+            </div>
         </div>
     </header>
 
     <main class="container">
+        <!-- Section: Résultats de recherche (cachée par défaut) -->
+        <section id="search-results" style="display: none;" class="mb-5" aria-labelledby="search-results-heading">
+            <h2 id="search-results-heading" class="h3 mb-3">Résultats de recherche</h2>
+            <div id="search-results-grid" class="row g-3" role="list" aria-label="Résultats de recherche">
+                <!-- Les films vont ici -->
+            </div>
+        </section>
+
         <!-- Section: Meilleur Film -->
         <section id="best-movie" class="mb-5" aria-labelledby="best-movie-heading">
             <h2 id="best-movie-heading" class="h3 mb-3">Meilleur Film</h2>
@@ -41,8 +56,8 @@
                 <!-- Cards will be inserted here -->
             </div>
             <div class="text-center mt-3">
-                <button id="btn-show-more-top" class="btn btn-outline-primary me-2" aria-expanded="false">Voir plus</button>
-                <button id="btn-show-less-top" class="btn btn-outline-secondary" style="display: none;" aria-expanded="true">Voir moins</button>
+                <button id="btn-show-more-top" class="btn btn-outline-primary me-2">Voir plus</button>
+                <button id="btn-show-less-top" class="btn btn-outline-secondary" style="display: none;">Voir moins</button>
             </div>
         </section>
 
@@ -53,8 +68,8 @@
                 <!-- Cards will be inserted here -->
             </div>
             <div class="text-center mt-3">
-                <button id="btn-show-more-cat1" class="btn btn-outline-primary me-2" aria-expanded="false">Voir plus</button>
-                <button id="btn-show-less-cat1" class="btn btn-outline-secondary" style="display: none;" aria-expanded="true">Voir moins</button>
+                <button id="btn-show-more-cat1" class="btn btn-outline-primary me-2">Voir plus</button>
+                <button id="btn-show-less-cat1" class="btn btn-outline-secondary" style="display: none;">Voir moins</button>
             </div>
         </section>
 
@@ -65,8 +80,8 @@
                 <!-- Cards will be inserted here -->
             </div>
             <div class="text-center mt-3">
-                <button id="btn-show-more-cat2" class="btn btn-outline-primary me-2" aria-expanded="false">Voir plus</button>
-                <button id="btn-show-less-cat2" class="btn btn-outline-secondary" style="display: none;" aria-expanded="true">Voir moins</button>
+                <button id="btn-show-more-cat2" class="btn btn-outline-primary me-2">Voir plus</button>
+                <button id="btn-show-less-cat2" class="btn btn-outline-secondary" style="display: none;">Voir moins</button>
             </div>
         </section>
 
@@ -85,19 +100,18 @@
                 <!-- Cards will be inserted here -->
             </div>
             <div class="text-center mt-3">
-                <button id="btn-show-more-others" class="btn btn-outline-primary me-2" aria-expanded="false">Voir plus</button>
-                <button id="btn-show-less-others" class="btn btn-outline-secondary" style="display: none;" aria-expanded="true">Voir moins</button>
+                <button id="btn-show-more-others" class="btn btn-outline-primary me-2">Voir plus</button>
+                <button id="btn-show-less-others" class="btn btn-outline-secondary" style="display: none;">Voir moins</button>
             </div>
         </section>
-    </main>
 
     <!-- Footer -->
     <footer class="bg-dark text-white py-3 mt-5">
         <div class="container text-center">
-            <p class="mb-0">&copy; 2025 JustStreamIt - Projet OpenClassrooms</p>
+            <p class="mb-0">&copy; 2025 JustStreamIt - Projet OpenClassrooms par Anis Bekkouche</p>
         </div>
     </footer>
-
+    
     <!-- Modal de détails -->
     <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">

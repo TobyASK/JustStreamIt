@@ -1,155 +1,201 @@
-﻿// ============================================================
-// api.js - FICHIER QUI COMMUNIQUE AVEC LE SERVEUR (API)
-// ============================================================
-// Ce fichier contient toutes les fonctions qui vont chercher
-// les données des films sur le serveur local (localhost:8000)
-// ============================================================
+﻿/**
+ * Module API - Gestion de toutes les requêtes HTTP vers l'API OCMovies
+ * 
+ * L'API est hébergée localement sur http://127.0.0.1:8000
+ * Tous les appels utilisent le fetch API et retournent des Promises
+ */
 
-// L'adresse du serveur API (ton serveur Django local)
-// "export" permet d'utiliser cette variable dans d'autres fichiers
+// URL de base de l'API OCMovies locale
+// Toutes les requêtes commencent par cette URL
 export const API_BASE = "http://127.0.0.1:8000/api/v1";
 
-// ------------------------------------------------------------
-// FONCTION UTILITAIRE : getJSON
-// ------------------------------------------------------------
-// Rôle : Faire une requête HTTP et récupérer les données JSON
-// C'est une fonction "privée" (pas de export) utilisée en interne
-//
-// "async" = cette fonction est asynchrone (elle attend une réponse du serveur)
-// "await" = on attend que fetch() ait fini avant de continuer
+/**
+ * Fonction helper pour toutes les requêtes GET
+ * Encapsule fetch() et gère les erreurs HTTP
+ * 
+ * @param {string} url - URL complète de la requête
+ * @returns {Promise<Object>} - Données JSON parsées
+ * @throws {Error} - Si la réponse HTTP n'est pas OK (status >= 400)
+ */
 async function getJSON(url) {
-  // fetch() envoie une requête HTTP à l'URL donnée
-  // "await" attend la réponse du serveur
   const r = await fetch(url);
-  
-  // Si la réponse n'est pas OK (erreur 404, 500, etc.), on lance une erreur
   if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
-  
-  // .json() transforme la réponse texte en objet JavaScript
-  // On retourne cet objet pour l'utiliser ensuite
   return r.json();
 }
 
-// ------------------------------------------------------------
-// FONCTION : fetchTop - Récupérer les meilleurs films
-// ------------------------------------------------------------
-// Rôle : Récupère les films triés par note IMDb (du meilleur au moins bon)
-// Paramètre : page = numéro de page (par défaut 1)
-// Le "-" devant imdb_score signifie "ordre décroissant" (9.5, 9.4, 9.3...)
-//
-// `${variable}` = syntaxe pour insérer une variable dans une chaîne
+/**
+ * Récupère les films les mieux notés (triés par score IMDB décroissant)
+ * 
+ * Endpoint: GET /api/v1/titles/?sort_by=-imdb_score&page={page}
+ * 
+ * @param {number} page - Numéro de page (défaut: 1)
+ * @returns {Promise<Object>} - Objet {count, next, previous, results: [films]}
+ * 
+ * @example
+ * const data = await fetchTop(1);
+ * console.log(data.results[0]); // Le film avec le meilleur score IMDB
+ */
 export async function fetchTop(page = 1) {
   return getJSON(`${API_BASE}/titles/?sort_by=-imdb_score&page=${page}`);
 }
 
-// ------------------------------------------------------------
-// FONCTION : fetchByGenre - Récupérer les films d'un genre
-// ------------------------------------------------------------
-// Rôle : Récupère les films d'un genre spécifique (Action, Drama, etc.)
-// Paramètres : 
-//   - genre = le nom du genre ("Action", "Drama", etc.)
-//   - page = numéro de page (par défaut 1)
-//
-// encodeURIComponent() = transforme les caractères spéciaux pour l'URL
-// (ex: "Sci-Fi" devient "Sci-Fi" encodé pour être valide dans une URL)
+/**
+ * Récupère les films d'un genre spécifique (triés par score IMDB décroissant)
+ * 
+ * Endpoint: GET /api/v1/titles/?genre={genre}&sort_by=-imdb_score&page={page}
+ * 
+ * @param {string} genre - Nom du genre (ex: "Mystery", "Drama", "Action")
+ * @param {number} page - Numéro de page (défaut: 1)
+ * @returns {Promise<Object>} - Objet {count, next, previous, results: [films]}
+ * 
+ * @example
+ * const data = await fetchByGenre("Mystery", 1);
+ * console.log(data.results); // Films du genre Mystery
+ */
 export async function fetchByGenre(genre, page = 1) {
   return getJSON(`${API_BASE}/titles/?genre=${encodeURIComponent(genre)}&sort_by=-imdb_score&page=${page}`);
 }
 
-// ------------------------------------------------------------
-// FONCTION : fetchDetails - Récupérer les détails d'un film
-// ------------------------------------------------------------
-// Rôle : Récupère TOUTES les informations d'un film (résumé, acteurs, etc.)
-// Paramètre : id = l'identifiant unique du film (ex: 123)
-//
-// Cette fonction est appelée quand on clique sur "Détails"
+/**
+ * Récupère les détails complets d'un film (toutes les informations)
+ * 
+ * Endpoint: GET /api/v1/titles/{id}
+ * 
+ * @param {number|string} id - ID du film
+ * @returns {Promise<Object>} - Objet film complet avec tous les champs
+ *                               (genres, date, acteurs, réalisateurs, résumé, etc.)
+ * 
+ * @example
+ * const film = await fetchDetails(1);
+ * console.log(film.long_description); // Description complète du film
+ */
 export async function fetchDetails(id) {
   return getJSON(`${API_BASE}/titles/${id}`);
 }
 
-// ------------------------------------------------------------
-// FONCTION : fetchGenres - Récupérer une page de genres
-// ------------------------------------------------------------
-// Rôle : Récupère la liste des genres disponibles (une page)
-// Utilisée par fetchAllGenres() ci-dessous
+/**
+ * Récupère une page de genres (pagination)
+ * 
+ * Endpoint: GET /api/v1/genres/?page={page}
+ * 
+ * @param {number} page - Numéro de page (défaut: 1)
+ * @returns {Promise<Object>} - Objet {count, next, previous, results: [genres]}
+ * 
+ * @example
+ * const data = await fetchGenres(1);
+ * console.log(data.results); // Genres de la première page
+ */
 export async function fetchGenres(page = 1) {
   return getJSON(`${API_BASE}/genres/?page=${page}`);
 }
 
-// ------------------------------------------------------------
-// FONCTION : fetchAllGenres - Récupérer TOUS les genres
-// ------------------------------------------------------------
-// Rôle : Récupère tous les genres en parcourant toutes les pages
-// Retourne : un tableau trié alphabétiquement ["Action", "Comedy", "Drama", ...]
-//
-// Cette fonction est plus complexe car l'API renvoie les genres
-// par pages (pagination), donc on doit faire plusieurs requêtes
+/**
+ * Récupère TOUS les genres (avec pagination automatique)
+ * 
+ * L'API paginne les genres, cette fonction boucle sur toutes les pages
+ * et retourne une liste unique de tous les genres triés alphabétiquement
+ * 
+ * Stratégie:
+ * 1. Boucler sur toutes les pages de genres
+ * 2. Éviter les doublons avec un Set (case-insensitive)
+ * 3. Retourner une liste triée alphabétiquement
+ * 4. Safety limit: max 100 pages pour éviter les boucles infinies
+ * 
+ * @returns {Promise<string[]>} - Tableau des noms de genres uniques, triés A-Z
+ * 
+ * @example
+ * const genres = await fetchAllGenres();
+ * console.log(genres); // ["Action", "Adventure", "Animation", ...]
+ */
 export async function fetchAllGenres() {
-  // Set = collection qui n'accepte pas les doublons
-  // On l'utilise pour éviter d'avoir 2 fois le même genre
-  const seen = new Set();
+  const seen = new Set();  // Stocke les genres déjà vus (évite les doublons)
+  const out = [];          // Liste finale des genres
+  let page = 1;            // Numéro de page courant
+  let safety = 0;          // Compteur de sécurité (évite les boucles infinies)
   
-  // Tableau qui contiendra tous les genres trouvés
-  const out = [];
-  
-  // Numéro de la page actuelle
-  let page = 1;
-  
-  // Compteur de sécurité pour éviter une boucle infinie
-  let safety = 0;
-  
-  // Boucle : tant qu'on n'a pas parcouru toutes les pages
-  // (et maximum 100 itérations par sécurité)
+  // Boucler sur toutes les pages de genres
   while (safety < 100) {
-    // Récupère une page de genres
     const data = await fetchGenres(page);
-    
-    // Si data.results est un tableau, on l'utilise, sinon tableau vide
     const results = Array.isArray(data.results) ? data.results : [];
     
-    // Pour chaque genre dans les résultats...
+    // Parcourir tous les genres de cette page
     for (const g of results) {
-      // Récupère le nom du genre (ou chaîne vide si pas de nom)
       const name = (g && g.name ? String(g.name).trim() : "");
-      
-      // Si le nom existe ET qu'on ne l'a pas déjà vu...
-      // .toLowerCase() pour ignorer la casse (Action = action)
+      // Ajouter seulement si pas déjà vu (case-insensitive)
       if (name && !seen.has(name.toLowerCase())) {
-        // On l'ajoute aux genres vus
         seen.add(name.toLowerCase());
-        // On l'ajoute au tableau de sortie
         out.push(name);
       }
     }
     
-    // Si pas de page suivante (data.next est null), on arrête
+    // S'il n'y a pas de prochaine page, on a fini
     if (!data.next) break;
     
-    // Sinon, on passe à la page suivante
+    // Extraire le numéro de page suivant depuis le lien "next"
     try {
-      // Extraire le numéro de page depuis l'URL "next"
       const url = new URL(data.next, API_BASE);
       const nextPage = url.searchParams.get("page");
       page = nextPage ? parseInt(nextPage, 10) : page + 1;
     } catch (_) {
-      // En cas d'erreur, on incrémente simplement
-      page += 1;
+      page += 1;  // Fallback: incrémenter simplement
     }
-    
-    // Incrémente le compteur de sécurité
     safety++;
   }
   
-  // Trie les genres par ordre alphabétique et retourne le tableau
-  // localeCompare() permet un tri correct avec les accents
+  // Retourner la liste triée alphabétiquement
   return out.sort((a, b) => a.localeCompare(b));
 }
 
-// ------------------------------------------------------------
-// CONSTANTE : GENRES - Liste de secours (fallback)
-// ------------------------------------------------------------
-// Si l'API ne répond pas, on utilise cette liste par défaut
-// C'est un "fallback" (plan B)
+/**
+ * Recherche des films par titre dans TOUTE la base de données
+ * Charge toutes les pages de résultats jusqu'à trouver tous les films correspondants
+ * Cherche uniquement dans les titres (insensible à la casse)
+ * 
+ * Endpoint: GET /api/v1/titles/?title_contains={query}&page={page}
+ * 
+ * @param {string} query - Terme de recherche (recherche dans les titres)
+ * @returns {Promise<Object>} - Objet {count, results: [tous les films trouvés]}
+ * 
+ * @example
+ * const results = await fetchSearch("Matrix");
+ * console.log(results.results); // TOUS les films dont le titre contient "Matrix"
+ */
+export async function fetchSearch(query) {
+  const allResults = [];
+  let page = 1;
+  let hasMore = true;
+
+  // Boucle pour charger toutes les pages de résultats
+  while (hasMore) {
+    try {
+      const data = await getJSON(`${API_BASE}/titles/?title_contains=${encodeURIComponent(query)}&page=${page}`);
+      
+      // Ajouter les résultats de cette page
+      if (data.results && data.results.length > 0) {
+        allResults.push(...data.results);
+      }
+      
+      // Vérifier s'il y a une page suivante
+      hasMore = !!data.next;
+      page++;
+    } catch (error) {
+      console.error(`Erreur lors du chargement page ${page}:`, error);
+      hasMore = false;
+    }
+  }
+
+  // Retourner tous les résultats accumulés
+  return {
+    count: allResults.length,
+    results: allResults
+  };
+}
+
+/**
+ * Liste locale des genres (fallback)
+ * Utilisée comme fallback si fetchAllGenres() échoue
+ * Permet au site de fonctionner même si l'API est down
+ */
 export const GENRES = [
   "Action","Adventure","Animation","Biography","Comedy","Crime","Drama","Family",
   "Fantasy","History","Horror","Mystery","Romance","Sci-Fi","Sport","Thriller","War","Western"

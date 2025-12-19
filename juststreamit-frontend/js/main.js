@@ -1,50 +1,32 @@
-// ============================================================
-// main.js - POINT D'ENTRÉE DE L'APPLICATION (Chef d'orchestre)
-// ============================================================
-// Ce fichier est le premier à s'exécuter. Il :
-// 1. Initialise toutes les sections de la page
-// 2. Gère les clics sur les boutons "Détails"
-// 3. Gère les boutons "Voir plus/moins"
-// 4. Gère le changement de genre dans "Autres"
-// ============================================================
+// Point d'entrée de l'application JustStreamIt
+// Gère le chargement initial, les événements et la coordination des sections
 
-// ------------------------------------------------------------
-// IMPORTS - Fonctions des autres fichiers
-// ------------------------------------------------------------
-// On importe les fonctions nécessaires depuis les autres modules
 import { renderBest, renderTop, renderCategory, initOthers } from "./sections.js";
-import { fetchDetails } from "./api.js";
+import { fetchDetails, fetchSearch } from "./api.js";
+import { movieCard, clear, applyVisibility } from "./ui.js";
 
-// ------------------------------------------------------------
-// VARIABLES GLOBALES
-// ------------------------------------------------------------
-// Ces variables stockent les "handlers" (gestionnaires) des boutons "Voir plus/moins"
-// "let" permet de modifier la variable plus tard (contrairement à "const")
-// Au début, elles sont "undefined" (pas encore définies)
+/**
+ * Handlers globaux pour les boutons "Voir plus/moins"
+ * Chaque section a son propre handler retourné par applyVisibility()
+ * Ces variables stockent les references pour pouvoir les utiliser au click
+ */
 let showMoreTop, showMoreCat1, showMoreCat2, showMoreOthers;
 
-// ------------------------------------------------------------
-// FONCTION : openDetails - Ouvrir la modale avec les détails d'un film
-// ------------------------------------------------------------
-// Rôle : Affiche une fenêtre popup avec toutes les infos d'un film
-// Paramètre : id = l'identifiant du film à afficher
-// Appelée quand on clique sur "Détails" ou sur une carte
+/**
+ * Ouvre la modale avec les détails complets d'un film
+ * Récupère les données depuis l'API et affiche toutes les infos
+ * 
+ * @param {number|string} id - ID du film
+ */
 async function openDetails(id) {
   try {
-    // Récupère les données du film depuis l'API
     const data = await fetchDetails(id);
     
-    // Met à jour le titre de la modale (en haut de la popup)
-    // textContent = définit le texte d'un élément
+    // Remplir le titre de la modale avec le titre du film
     document.getElementById("detailsModalLabel").textContent = data.title || "Détails du film";
     
-    // Récupère l'élément où afficher le contenu
+    // Construire le contenu complet de la modale avec tous les champs disponibles
     const modalContent = document.getElementById("modal-content");
-    
-    // Crée le HTML avec toutes les informations du film
-    // Array.isArray() vérifie si c'est un tableau
-    // .join(", ") transforme un tableau en chaîne avec des virgules
-    // Ex: ["Action", "Drama"] devient "Action, Drama"
     modalContent.innerHTML = `
       <div class="row g-3">
         <div class="col-md-4">
@@ -97,47 +79,126 @@ async function openDetails(id) {
       </div>
     `;
     
-    // Ouvre la modale en utilisant l'API JavaScript de Bootstrap 5
-    // "new bootstrap.Modal()" crée une instance de modale
-    // .show() l'affiche à l'écran
+    // Ouvrir la modale avec Bootstrap 5
     const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
     modal.show();
-    
   } catch (error) {
-    // En cas d'erreur, affiche dans la console et alerte l'utilisateur
     console.error("Erreur lors du chargement des détails:", error);
     alert("Erreur lors du chargement des détails du film");
   }
 }
 
-// ------------------------------------------------------------
-// FONCTION : delegateDetailsClicks - Délégation d'événements
-// ------------------------------------------------------------
-// Rôle : Écoute TOUS les clics sur la page et ouvre la modale si nécessaire
-// 
-// POURQUOI "DÉLÉGATION" ?
-// Au lieu de mettre un écouteur sur chaque carte (100+ écouteurs),
-// on met UN SEUL écouteur sur le document qui capture tous les clics.
-// C'est plus performant et ça fonctionne même pour les cartes ajoutées après.
-//
-// Paramètre : root = où écouter les clics (par défaut : tout le document)
-function delegateDetailsClicks(root = document) {
-  // addEventListener() ajoute un écouteur d'événements
-  // "click" = on écoute les clics
-  // (e) => { ... } = fonction à exécuter quand un clic se produit
-  // "e" est l'objet Event qui contient les infos sur le clic
-  root.addEventListener("click", (e) => {
-    // e.target = l'élément exact qui a été cliqué
-    // .closest() remonte dans les parents pour trouver l'élément qui a l'attribut
-    // "[data-open-details]" = sélecteur CSS pour les éléments avec cet attribut
-    const btn = e.target.closest("[data-open-details]");
+/**
+ * Gère la recherche de films
+ * 
+ * Affiche les résultats dans une section dédiée
+ * Cache les autres sections (Meilleur, Top, Catégories, Autres)
+ * 
+ * @param {string} query - Terme de recherche
+ */
+async function handleSearch(query) {
+  if (!query.trim()) {
+    // Si recherche vide, revenir à l'affichage normal
+    showAllSections();
+    return;
+  }
+
+  try {
+    // Récupérer les résultats
+    const results = await fetchSearch(query, 1);
+    const searchGrid = document.getElementById("search-results-grid");
+    const searchSection = document.getElementById("search-results");
+
+    // Vider la grille et afficher les résultats
+    clear(searchGrid);
     
-    // Si on a trouvé un élément avec data-open-details...
+    if (!results.results || results.results.length === 0) {
+      searchGrid.innerHTML = '<div class="col-12"><p class="text-muted">Aucun film trouvé pour "<strong>' + query + '</strong>"</p></div>';
+    } else {
+      // Ajouter les cartes films
+      results.results.forEach(movie => {
+        searchGrid.appendChild(movieCard(movie));
+      });
+    }
+
+    // Afficher la section résultats, cacher les autres
+    hideAllSections();
+    searchSection.style.display = '';
+  } catch (error) {
+    console.error("Erreur lors de la recherche:", error);
+    document.getElementById("search-results-grid").innerHTML = '<div class="col-12"><p class="text-danger">Erreur lors de la recherche</p></div>';
+  }
+}
+
+/**
+ * Affiche toutes les sections (Meilleur, Top, Catégories, Autres)
+ */
+function showAllSections() {
+  document.getElementById("best-movie").style.display = '';
+  document.getElementById("top-rated").style.display = '';
+  document.getElementById("category-1").style.display = '';
+  document.getElementById("category-2").style.display = '';
+  document.getElementById("others").style.display = '';
+  document.getElementById("search-results").style.display = 'none';
+}
+
+/**
+ * Cache toutes les sections (sauf recherche)
+ */
+function hideAllSections() {
+  document.getElementById("best-movie").style.display = 'none';
+  document.getElementById("top-rated").style.display = 'none';
+  document.getElementById("category-1").style.display = 'none';
+  document.getElementById("category-2").style.display = 'none';
+  document.getElementById("others").style.display = 'none';
+}
+
+/**
+ * Connecte les événements de la barre de recherche
+ */
+function setupSearch() {
+  const searchInput = document.getElementById("search-input");
+  const searchBtn = document.getElementById("search-btn");
+  const clearBtn = document.getElementById("clear-search-btn");
+
+  // Clic sur le bouton Rechercher
+  searchBtn.onclick = () => {
+    const query = searchInput.value.trim();
+    if (query) {
+      handleSearch(query);
+      clearBtn.style.display = '';  // Afficher le bouton Revenir
+    }
+  };
+
+  // Appuyer sur Entrée dans l'input
+  searchInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      const query = searchInput.value.trim();
+      if (query) {
+        handleSearch(query);
+        clearBtn.style.display = '';  // Afficher le bouton Revenir
+      }
+    }
+  });
+
+  // Clic sur le bouton Revenir à l'accueil
+  clearBtn.onclick = () => {
+    searchInput.value = '';
+    showAllSections();
+    clearBtn.style.display = 'none';  // Cacher le bouton Revenir
+  };
+}
+
+/**
+ * Écoute au niveau du document pour ouvrir la modale au clic sur une carte ou un bouton détails
+ * Utilise l'attribut data-open-details et data-movie-id pour identifier les films
+ */
+function delegateDetailsClicks(root = document) {
+  root.addEventListener("click", (e) => {
+    // Chercher l'élément le plus proche portant data-open-details
+    const btn = e.target.closest("[data-open-details]");
     if (btn) {
-      // Récupère l'ID du film depuis l'attribut data-movie-id
       const id = btn.getAttribute("data-movie-id");
-      
-      // Si l'ID existe, ouvre les détails
       if (id) {
         openDetails(id);
       }
@@ -145,254 +206,171 @@ function delegateDetailsClicks(root = document) {
   });
 }
 
-// ------------------------------------------------------------
-// FONCTION : wireMoreButtons - Connecter les boutons Voir plus/moins
-// ------------------------------------------------------------
-// Rôle : Associe chaque paire de boutons (plus/moins) à sa grille
-// Cette fonction utilise une "closure" pour créer des connexions réutilisables
+/**
+ * Connecte les boutons "Voir plus" et "Voir moins" à leurs handlers
+ * Gère la visibilité des boutons en fonction de l'état (visible, total, defaultVisible)
+ * 
+ * Logique:
+ * - "Voir plus" visible si: total > defaultVisible ET (films cachés OU pages à charger)
+ * - "Voir moins" visible si: visible > defaultVisible
+ */
 function wireMoreButtons() {
-  // ------------------------------------------------------------
-  // FONCTION INTERNE : bindPair
-  // ------------------------------------------------------------
-  // Rôle : Connecte une paire de boutons (plus/moins) à une grille
-  // Paramètres :
-  //   - moreId : ID du bouton "Voir plus"
-  //   - lessId : ID du bouton "Voir moins"
-  //   - gridId : ID de la grille de films
-  //   - handlerGetter : fonction qui retourne le handler actuel
-  //
-  // "handlerGetter" est une fonction car le handler peut changer
-  // (quand on change de genre dans "Autres", le handler est recréé)
+  // Fonction helper pour connecter une paire de boutons à une grille
   const bindPair = (moreId, lessId, gridId, handlerGetter) => {
-    // Récupère les éléments HTML
     const btnMore = document.getElementById(moreId);
     const btnLess = document.getElementById(lessId);
     const grid = document.getElementById(gridId);
     
-    // Si un élément n'existe pas, on arrête
     if (!btnMore || !btnLess || !grid) return;
     
-    // Fonction pour mettre à jour l'affichage des boutons
+    /**
+     * Met à jour l'affichage des boutons en fonction de l'état
+     * Appelée après chaque action (more, less) ou changement
+     */
     const updateButtons = () => {
-      // Récupère le handler actuel
       const handler = handlerGetter();
       if (!handler) return;
       
-      // Récupère l'état (combien de films visibles, etc.)
       const state = handler.getState();
-      
-      // Affiche/cache le bouton "Voir plus"
-      // Si canShowMore est true : affiche, sinon cache
+      // Afficher/cacher les boutons selon les conditions
       btnMore.style.display = state.canShowMore ? "inline-block" : "none";
-      
-      // Affiche/cache le bouton "Voir moins"
       btnLess.style.display = state.canShowLess ? "inline-block" : "none";
     };
     
-    // Clic sur "Voir plus"
-    // onclick = définit ce qui se passe quand on clique
+    // Event listener pour "Voir plus"
     btnMore.onclick = async () => {
       const handler = handlerGetter();
       if (handler) {
-        await handler.more();  // Affiche plus de cartes
-        updateButtons();       // Met à jour les boutons
+        await handler.more();  // Attend le chargement potentiel depuis l'API
+        updateButtons();
       }
     };
     
-    // Clic sur "Voir moins"
+    // Event listener pour "Voir moins"
     btnLess.onclick = () => {
       const handler = handlerGetter();
       if (handler) {
-        handler.less();    // Cache des cartes
-        updateButtons();   // Met à jour les boutons
+        handler.less();
+        updateButtons();
       }
     };
     
-    // Met à jour les boutons au démarrage
+    // Initialiser l'état des boutons au démarrage
     updateButtons();
   };
 
-  // Connecte les 4 paires de boutons aux 4 grilles
-  // () => showMoreTop est une "arrow function" qui retourne la valeur actuelle
+  // Connecter les 4 paires de boutons aux 4 grilles
   bindPair("btn-show-more-top", "btn-show-less-top", "top-rated-grid", () => showMoreTop);
   bindPair("btn-show-more-cat1", "btn-show-less-cat1", "category-1-grid", () => showMoreCat1);
   bindPair("btn-show-more-cat2", "btn-show-less-cat2", "category-2-grid", () => showMoreCat2);
   bindPair("btn-show-more-others", "btn-show-less-others", "others-grid", () => showMoreOthers);
 }
 
-// ------------------------------------------------------------
-// FONCTION : handleResize - Gérer le redimensionnement
-// ------------------------------------------------------------
-// Rôle : Quand la fenêtre change de taille, recalcule l'affichage
-// Ex: Passer de desktop (6 cartes) à mobile (2 cartes)
+/**
+ * Gère le redimensionnement de la fenêtre (responsive)
+ * Quand la taille change, les breakpoints (2/4/6) peuvent changer
+ * Recalcule le nombre par défaut visible et met à jour l'affichage
+ */
 function handleResize() {
-  // Ajoute un écouteur sur l'événement "resize" (redimensionnement)
   window.addEventListener("resize", () => {
-    // Liste des grilles à mettre à jour
+    // Liste de toutes les grilles à recalculer
     const grids = [
-      "top-rated-grid",
-      "category-1-grid",
-      "category-2-grid",
-      "others-grid"
+      { id: "top-rated-grid", handler: () => showMoreTop },
+      { id: "category-1-grid", handler: () => showMoreCat1 },
+      { id: "category-2-grid", handler: () => showMoreCat2 },
+      { id: "others-grid", handler: () => showMoreOthers }
     ];
     
-    // Pour chaque grille...
-    grids.forEach(gridId => {
-      const grid = document.getElementById(gridId);
-      if (!grid) return;  // Si la grille n'existe pas, passe à la suivante
-      
-      // Récupère toutes les cartes
-      const cards = [...grid.children];
-      
-      // Détecte la taille de l'écran
-      const mqLg = window.matchMedia("(min-width: 992px)");
-      const mqMd = window.matchMedia("(min-width: 768px)");
-      
-      // Calcule le nouveau nombre par défaut
-      const defaultVisible = mqLg.matches ? 6 : mqMd.matches ? 4 : 2;
-      
-      // Vérifie si la grille était "étendue" (Voir plus cliqué)
-      const expanded = grid.dataset.expanded === "true";
-      
-      // Si étendu : montre tout, sinon applique le nouveau défaut
-      const visible = expanded ? cards.length : Math.min(defaultVisible, cards.length);
-      
-      // Met à jour les attributs data-
-      grid.dataset.defaultVisible = String(defaultVisible);
-      grid.dataset.visible = String(visible);
-      
-      // Applique la visibilité à chaque carte
-      cards.forEach((c, i) => {
-        if (i < visible) {
-          // Carte visible
-          c.style.opacity = '1';
-          c.style.pointerEvents = 'auto';
-          c.style.position = 'relative';
-        } else {
-          // Carte cachée (déplacée hors écran)
-          c.style.opacity = '0';
-          c.style.pointerEvents = 'none';
-          c.style.position = 'absolute';
-          c.style.left = '-9999px';
-        }
-      });
+    grids.forEach(({ id, handler }) => {
+      const grid = document.getElementById(id);
+      const h = handler();
+      // Chaque handler a une méthode updateForResize() pour ajuster le breakpoint
+      if (!grid || !h) return;
+      h.updateForResize();
     });
   });
 }
 
-// ------------------------------------------------------------
-// FONCTION : main - Fonction principale d'initialisation
-// ------------------------------------------------------------
-// Rôle : Lance l'application au chargement de la page
-// C'est la fonction qui coordonne tout le démarrage
-//
-// SÉQUENCE D'EXÉCUTION :
-// 1. Active la détection des clics pour la modale
-// 2. Charge les genres pour le dropdown "Autres"
-// 3. Remplit toutes les sections avec des films
-// 4. Connecte les boutons "Voir plus/moins"
-// 5. Configure le changement de genre dans "Autres"
-// 6. Active la gestion du redimensionnement
+/**
+ * Fonction d'initialisation principale de l'application
+ * Exécutée au chargement du module (ES6)
+ * 
+ * Orchestration complète:
+ * 1. Délégation des clics pour ouvrir les modales
+ * 2. Chargement de la liste des genres
+ * 3. Remplissage parallèle de toutes les sections
+ * 4. Connexion des boutons "Voir plus/moins"
+ * 5. Gestion du changement de genre dans "Autres"
+ * 6. Activation de la gestion du resize (responsive)
+ */
 async function main() {
   try {
-    // ========== ÉTAPE 1 ==========
-    // Active la délégation des clics pour ouvrir la modale
-    // À partir de maintenant, tout clic sur data-open-details ouvrira la modale
+    // 1. Mettre en place la délégation d'événements pour les clics "Détails"
+    // Écoute au niveau du document et ouvre la modale correspondante
     delegateDetailsClicks();
     
-    // ========== ÉTAPE 2 ==========
-    // Initialise la liste déroulante des genres
-    // Remplit le <select> avec tous les genres disponibles
+    // 2. Mettre en place la barre de recherche
+    setupSearch();
+    
+    // 3. Charger la liste complète des genres depuis l'API (ou fallback local)
+    // Remplit le select#genre-select
     await initOthers();
     
-    // ========== CONFIGURATION ==========
     // Genres fixes pour les catégories 1 et 2
-    // Tu peux les changer ici si tu veux d'autres genres
     const genre1 = "Mystery";
     const genre2 = "Drama";
     
-    // Récupère le premier genre de la liste pour "Autres"
+    // Récupérer le genre initial pour "Autres" (le premier de la liste)
     const select = document.getElementById("genre-select");
-    // options[0] = première option du select
-    // ?.value = valeur si elle existe, sinon undefined
-    // || "Action" = valeur par défaut si undefined
     const initialOthers = select.options[0]?.value || "Action";
     
-    // ========== ÉTAPE 3 ==========
-    // Remplit toutes les sections et récupère les handlers
-    
-    // Affiche le meilleur film en haut
+    // 4. Charger le contenu de toutes les sections
+    // renderBest() : meilleur film (solo)
+    // renderTop() : films 2-13 des mieux notés
+    // renderCategory() : films par genre (Mystery, Drama, etc.)
+    // Chaque render retourne un handler pour gérer voir plus/moins
     await renderBest();
-    
-    // Affiche les films les mieux notés et stocke le handler
     showMoreTop = await renderTop();
-    
-    // Affiche les films Mystery et stocke le handler
     showMoreCat1 = await renderCategory("category-1", genre1);
-    
-    // Affiche les films Drama et stocke le handler
     showMoreCat2 = await renderCategory("category-2", genre2);
-    
-    // Affiche les films du premier genre (Autres) et stocke le handler
     showMoreOthers = await renderCategory("others", initialOthers);
     
-    // ========== ÉTAPE 4 ==========
-    // Connecte les boutons "Voir plus/moins" aux grilles
+    // 5. Connecter les boutons "Voir plus" et "Voir moins" aux handlers
+    // Gère la logique d'affichage/masquage des boutons et des films
     wireMoreButtons();
     
-    // ========== ÉTAPE 5 ==========
-    // Écoute les changements dans le dropdown "Autres"
-    // Quand l'utilisateur choisit un nouveau genre...
+    // 6. Gérer le changement de genre dans la section "Autres"
+    // Quand l'utilisateur sélectionne un nouveau genre, recharger les films
     select.addEventListener("change", async () => {
-      // Récupère le genre sélectionné
       const selectedGenre = select.value;
-      
       if (selectedGenre) {
-        // Affiche un spinner de chargement
+        // Afficher un spinner pendant le chargement
         const othersGrid = document.getElementById("others-grid");
         othersGrid.innerHTML = '<div class="col-12 text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
         
-        // Recharge la grille avec le nouveau genre
-        // Le nouveau handler remplace l'ancien
+        // Recharger la grille avec le nouveau genre et récupérer le nouveau handler
         showMoreOthers = await renderCategory("others", selectedGenre);
         
-        // Met à jour l'affichage du bouton "Voir plus"
-        const btn = document.getElementById("btn-show-more-others");
-        if (btn) {
-          const grid = document.getElementById("others-grid");
-          if (!grid) return;
-          
-          // Vérifie s'il y a une erreur ou si la grille est vide
-          const hasError = grid.querySelector('.text-muted, .text-danger');
-          const totalCards = parseInt(grid.dataset.total || "0", 10);
-          const defaultVisible = parseInt(grid.dataset.defaultVisible || "6", 10);
-          
-          // Cache le bouton si erreur, vide, ou pas assez de films
-          if (hasError || grid.children.length === 0 || totalCards <= defaultVisible) {
-            btn.style.display = "none";
-          } else {
-            btn.style.display = "";
-            btn.textContent = "Voir plus";
-          }
+        // Réinitialiser les boutons avec le nouvel état
+        const btnMore = document.getElementById("btn-show-more-others");
+        const btnLess = document.getElementById("btn-show-less-others");
+        if (btnMore && btnLess && showMoreOthers && showMoreOthers.getState) {
+          const state = showMoreOthers.getState();
+          btnMore.style.display = state.canShowMore ? "inline-block" : "none";
+          btnLess.style.display = state.canShowLess ? "inline-block" : "none";
         }
       }
     });
     
-    // ========== ÉTAPE 6 ==========
-    // Active la gestion du redimensionnement de la fenêtre
+    // 6. Gérer les changements de taille de fenêtre (responsive)
+    // Recalcule les breakpoints 2/4/6 et met à jour l'affichage
     handleResize();
     
   } catch (error) {
-    // En cas d'erreur globale, l'affiche dans la console
     console.error("Erreur lors de l'initialisation:", error);
   }
 }
 
-// ============================================================
-// DÉMARRAGE DE L'APPLICATION
-// ============================================================
-// Appelle la fonction main() pour lancer l'application
-// Cette ligne s'exécute automatiquement quand le fichier est chargé
-// (car c'est un module ES6 avec type="module" dans le HTML)
+// Lancer l'application au chargement du module
 main();
 
