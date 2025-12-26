@@ -10,4 +10,3 @@ Markdown
 pytz
 sqlparse
 tqdm
-gunicorn

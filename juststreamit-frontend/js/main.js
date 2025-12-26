@@ -2,7 +2,7 @@
 // Gère le chargement initial, les événements et la coordination des sections
 
 import { renderBest, renderTop, renderCategory, initOthers } from "./sections.js";
-import { fetchDetails, fetchSearch } from "./api.js";
+import { fetchDetails, fetchSearch, getPageSize } from "./api.js";
 import { movieCard, clear, applyVisibility } from "./ui.js";
 
 /**
@@ -11,6 +11,11 @@ import { movieCard, clear, applyVisibility } from "./ui.js";
  * Ces variables stockent les references pour pouvoir les utiliser au click
  */
 let showMoreTop, showMoreCat1, showMoreCat2, showMoreOthers;
+
+/**
+ * Stocke le page_size précédent pour détecter les changements de breakpoint
+ */
+let previousPageSize = getPageSize();
 
 /**
  * Ouvre la modale avec les détails complets d'un film
@@ -270,24 +275,39 @@ function wireMoreButtons() {
  * Gère le redimensionnement de la fenêtre (responsive)
  * Quand la taille change, les breakpoints (2/4/6) peuvent changer
  * Recalcule le nombre par défaut visible et met à jour l'affichage
+ * Si le page_size change, recharge les données depuis l'API avec le nouveau page_size
  */
 function handleResize() {
   window.addEventListener("resize", () => {
-    // Liste de toutes les grilles à recalculer
-    const grids = [
-      { id: "top-rated-grid", handler: () => showMoreTop },
-      { id: "category-1-grid", handler: () => showMoreCat1 },
-      { id: "category-2-grid", handler: () => showMoreCat2 },
-      { id: "others-grid", handler: () => showMoreOthers }
-    ];
+    const currentPageSize = getPageSize();
     
-    grids.forEach(({ id, handler }) => {
-      const grid = document.getElementById(id);
-      const h = handler();
-      // Chaque handler a une méthode updateForResize() pour ajuster le breakpoint
-      if (!grid || !h) return;
-      h.updateForResize();
-    });
+    // Si le breakpoint a changé (mobile <-> tablette <-> desktop)
+    // on recharge les données avec le nouveau page_size
+    if (currentPageSize !== previousPageSize) {
+      console.log(`Breakpoint changé: ${previousPageSize} → ${currentPageSize}`);
+      previousPageSize = currentPageSize;
+      
+      // Recharger les 4 sections si les handlers existent
+      if (showMoreTop) showMoreTop.resetAndReload();
+      if (showMoreCat1) showMoreCat1.resetAndReload();
+      if (showMoreCat2) showMoreCat2.resetAndReload();
+      if (showMoreOthers) showMoreOthers.resetAndReload();
+    } else {
+      // Juste recalculer les breakpoints sans recharger (redimensionnement mineur)
+      const grids = [
+        { id: "top-rated-grid", handler: () => showMoreTop },
+        { id: "category-1-grid", handler: () => showMoreCat1 },
+        { id: "category-2-grid", handler: () => showMoreCat2 },
+        { id: "others-grid", handler: () => showMoreOthers }
+      ];
+      
+      grids.forEach(({ id, handler }) => {
+        const grid = document.getElementById(id);
+        const h = handler();
+        if (!grid || !h) return;
+        h.updateForResize();
+      });
+    }
   });
 }
 

@@ -142,6 +142,27 @@ export function applyVisibility(gridEl, fetchFn = null) {
         visible = Math.min(defaultVisible, gridEl.children.length);
       }
       apply();
+    },
+
+    /**
+     * Réinitialise la grille et recharge les données depuis l'API
+     * Appelé quand le page_size change (changement de breakpoint)
+     * Vide la grille, recharge la première page avec le nouveau page_size
+     */
+    resetAndReload: async () => {
+      // Réinitialiser l'état
+      defaultVisible = getDefaultVisible();
+      gridEl.dataset.defaultVisible = String(defaultVisible);
+      visible = defaultVisible;
+      
+      // Vider la grille et recharger depuis le fichier sections.js
+      clear(gridEl);
+      gridEl.dataset.currentPage = '1';
+      gridEl.dataset.hasMore = 'true';
+      
+      // Le rechargement est géré par la fonction qui a créé ce handler
+      // On déclenche juste un événement personnalisé que sections.js écoute
+      gridEl.dispatchEvent(new CustomEvent('reload-data'));
     }
   };
 }

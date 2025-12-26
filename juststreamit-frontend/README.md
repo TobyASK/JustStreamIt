@@ -4,22 +4,38 @@ Site web vanilla JavaScript (Bootstrap 5 via CDN) consommant l’API locale OCMo
 
 ## Démarrer
 
-Pré-requis: environnement Python du dépôt API déjà installé (venv), dépendances de l’API installées.
+### Pré-requis
+- Environnement Python du dépôt API déjà installé (venv)
+- Dépendances de l'API installées
+- Django et DRF en fonctionnement
 
-Option 1 – tout sur le port 8000 (recommandé):
+### Option 1 – Frontend indépendant (recommandé)
 
-1. Depuis la racine du dépôt:
-    - Windows PowerShell/cmd: `START-JUSTSTREAMIT.bat`
-2. Ouvrez votre navigateur: http://127.0.0.1:8000/
-3. Faites un rafraîchissement dur (Ctrl+F5) pour recharger les scripts.
+⭐ **Le frontend et backend tournent séparément** – Respecte le cahier des charges P6
 
-Option 2 – manuel (équivalent):
+1. **Lancer le backend Django** (port 8000):
+   - Depuis la racine: `START-JUSTSTREAMIT.bat` OU
+   - Manuel: `./env/Scripts/Activate.ps1` puis `python manage.py runserver 8000`
 
-1. Activer l’environnement virtuel et lancer Django:
-    - PowerShell: `./env/Scripts/Activate.ps1` puis `python manage.py runserver 8000`
-2. Ouvrez http://127.0.0.1:8000/
+2. **Lancer le frontend** (port 3000):
+   - Depuis `juststreamit-frontend/`:
+     - Windows: `START-FRONTEND.bat` OU
+     - PowerShell: `START-FRONTEND.ps1` OU
+     - Manuel: `python server.py`
 
-L’API et le frontend sont servis par Django sur le même port 8000 (STATICFILES_DIRS inclut `juststreamit-frontend`).
+3. **Ouvrir dans le navigateur**: http://localhost:3000
+
+✅ CORS est activé dans Django (`CORS_ORIGIN_ALLOW_ALL = True`)
+✅ Le frontend appelle l'API sur http://127.0.0.1:8000/api/v1
+✅ Pas de modification des fichiers backend nécessaire
+
+### Option 2 – Tout intégré (ancien mode)
+
+1. Depuis la racine: `START-JUSTSTREAMIT.bat`
+2. Ouvrez: http://127.0.0.1:8000/
+3. Faites un rafraîchissement dur (Ctrl+F5)
+
+⚠️ Cette option suppose que le frontend est servi comme fichiers statiques Django.
 
 ## Fonctionnalités principales
 

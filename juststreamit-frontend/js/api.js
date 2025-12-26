@@ -7,7 +7,35 @@
 
 // URL de base de l'API OCMovies locale
 // Toutes les requêtes commencent par cette URL
-export const API_BASE = "http://127.0.0.1:8000/api/v1";
+export const API_BASE = "http://localhost:8000/api/v1";
+
+/**
+ * Détermine la taille d'écran et retourne le page_size optimal
+ * - Mobile (< 768px): 2 films
+ * - Tablette (768px - 1024px): 4 films
+ * - Desktop (>= 1024px): 6 films
+ * 
+ * @returns {number} - Nombre de films à charger (2, 4 ou 6)
+ */
+export function getPageSize() {
+  const width = window.innerWidth;
+  if (width < 768) return 2;      // Mobile
+  if (width < 1024) return 4;     // Tablette
+  return 6;                        // Desktop
+}
+
+/**
+ * Construit les paramètres de query avec le page_size adapté
+ * 
+ * @param {Object} params - Paramètres de base (genre, page, etc.)
+ * @returns {string} - Paramètres URL encodés avec page_size
+ */
+function buildQuery(params = {}) {
+  const pageSize = getPageSize();
+  params.page_size = pageSize;
+  const query = new URLSearchParams(params);
+  return query.toString();
+}
 
 /**
  * Fonction helper pour toutes les requêtes GET
@@ -26,7 +54,8 @@ async function getJSON(url) {
 /**
  * Récupère les films les mieux notés (triés par score IMDB décroissant)
  * 
- * Endpoint: GET /api/v1/titles/?sort_by=-imdb_score&page={page}
+ * Endpoint: GET /api/v1/titles/?sort_by=-imdb_score&page_size=X&page={page}
+ * Le page_size s'adapte à la taille de l'écran (2, 4 ou 6)
  * 
  * @param {number} page - Numéro de page (défaut: 1)
  * @returns {Promise<Object>} - Objet {count, next, previous, results: [films]}
@@ -36,13 +65,15 @@ async function getJSON(url) {
  * console.log(data.results[0]); // Le film avec le meilleur score IMDB
  */
 export async function fetchTop(page = 1) {
-  return getJSON(`${API_BASE}/titles/?sort_by=-imdb_score&page=${page}`);
+  const pageSize = getPageSize();
+  return getJSON(`${API_BASE}/titles/?sort_by=-imdb_score&page_size=${pageSize}&page=${page}`);
 }
 
 /**
  * Récupère les films d'un genre spécifique (triés par score IMDB décroissant)
  * 
- * Endpoint: GET /api/v1/titles/?genre={genre}&sort_by=-imdb_score&page={page}
+ * Endpoint: GET /api/v1/titles/?genre={genre}&sort_by=-imdb_score&page_size=X&page={page}
+ * Le page_size s'adapte à la taille de l'écran (2, 4 ou 6)
  * 
  * @param {string} genre - Nom du genre (ex: "Mystery", "Drama", "Action")
  * @param {number} page - Numéro de page (défaut: 1)
@@ -53,7 +84,8 @@ export async function fetchTop(page = 1) {
  * console.log(data.results); // Films du genre Mystery
  */
 export async function fetchByGenre(genre, page = 1) {
-  return getJSON(`${API_BASE}/titles/?genre=${encodeURIComponent(genre)}&sort_by=-imdb_score&page=${page}`);
+  const pageSize = getPageSize();
+  return getJSON(`${API_BASE}/titles/?genre=${encodeURIComponent(genre)}&sort_by=-imdb_score&page_size=${pageSize}&page=${page}`);
 }
 
 /**
@@ -164,11 +196,12 @@ export async function fetchSearch(query) {
   const allResults = [];
   let page = 1;
   let hasMore = true;
+  const pageSize = getPageSize();
 
   // Boucle pour charger toutes les pages de résultats
   while (hasMore) {
     try {
-      const data = await getJSON(`${API_BASE}/titles/?title_contains=${encodeURIComponent(query)}&page=${page}`);
+      const data = await getJSON(`${API_BASE}/titles/?title_contains=${encodeURIComponent(query)}&page_size=${pageSize}&page=${page}`);
       
       // Ajouter les résultats de cette page
       if (data.results && data.results.length > 0) {
