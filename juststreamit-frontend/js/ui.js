@@ -1,6 +1,39 @@
 // Fonctions pour créer les éléments d'interface
 
 /**
+ * Retourne le HTML du contenu de la modale pour un film
+ * @param {Object} data - Données complètes du film (réponse API detail)
+ * @returns {string} - HTML à injecter dans #modal-content
+ */
+export function buildMovieDetails(data) {
+  const join = v => Array.isArray(v) ? v.join(", ") : (v || "N/A");
+  const placeholder = "https://via.placeholder.com/300x450?text=No+Image";
+  return `
+    <div class="row g-3">
+      <div class="col-md-4">
+        <img src="${data.image_url || ""}" alt="${data.title || ""}" class="img-fluid rounded"
+             onerror="this.src='${placeholder}'" />
+      </div>
+      <div class="col-md-8">
+        <div class="mb-2"><span class="info-label">Genres :</span> <span class="info-value">${join(data.genres)}</span></div>
+        <div class="mb-2"><span class="info-label">Date de sortie :</span> <span class="info-value">${data.date_published || "N/A"}</span></div>
+        <div class="mb-2"><span class="info-label">Classification :</span> <span class="info-value">${data.rated || "N/A"}</span></div>
+        <div class="mb-2"><span class="info-label">Score IMDB :</span> <span class="info-value">${data.imdb_score != null ? data.imdb_score + "/10" : "N/A"}</span></div>
+        <div class="mb-2"><span class="info-label">Réalisateur(s) :</span> <span class="info-value">${join(data.directors)}</span></div>
+        <div class="mb-2"><span class="info-label">Acteurs :</span> <span class="info-value">${join(data.actors)}</span></div>
+        <div class="mb-2"><span class="info-label">Durée :</span> <span class="info-value">${data.duration ? data.duration + " min" : "N/A"}</span></div>
+        <div class="mb-2"><span class="info-label">Pays :</span> <span class="info-value">${join(data.countries)}</span></div>
+        <div class="mb-2"><span class="info-label">Box-office :</span> <span class="info-value">${data.worldwide_gross_income || data.usa_gross_income || "N/A"}</span></div>
+      </div>
+      <div class="col-12">
+        <div class="mb-2"><span class="info-label">Résumé :</span></div>
+        <p class="info-value">${data.long_description || data.description || "Aucun résumé disponible."}</p>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Crée une carte film (cliquable pour ouvrir la modale)
  * @param {Object} movie - Objet film avec id, title, image_url, poster_url
  * @returns {HTMLElement} - Div col avec carte Bootstrap

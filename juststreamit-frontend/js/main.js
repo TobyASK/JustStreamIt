@@ -3,7 +3,7 @@
 
 import { renderBest, renderTop, renderCategory, initOthers } from "./sections.js";
 import { fetchDetails, fetchSearch, getPageSize } from "./api.js";
-import { movieCard, clear, applyVisibility } from "./ui.js";
+import { movieCard, clear, applyVisibility, buildMovieDetails } from "./ui.js";
 
 /**
  * Handlers globaux pour les boutons "Voir plus/moins"
@@ -26,65 +26,10 @@ let previousPageSize = getPageSize();
 async function openDetails(id) {
   try {
     const data = await fetchDetails(id);
-    
-    // Remplir le titre de la modale avec le titre du film
+
     document.getElementById("detailsModalLabel").textContent = data.title || "Détails du film";
-    
-    // Construire le contenu complet de la modale avec tous les champs disponibles
-    const modalContent = document.getElementById("modal-content");
-    modalContent.innerHTML = `
-      <div class="row g-3">
-        <div class="col-md-4">
-          <img src="${data.image_url || ""}" alt="${data.title || ""}" class="img-fluid rounded" onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'" />
-        </div>
-        <div class="col-md-8">
-          <div class="mb-2">
-            <span class="info-label">Genres :</span>
-            <span class="info-value">${Array.isArray(data.genres) ? data.genres.join(", ") : (data.genres || "N/A")}</span>
-          </div>
-          <div class="mb-2">
-            <span class="info-label">Date de sortie :</span>
-            <span class="info-value">${data.date_published || "N/A"}</span>
-          </div>
-          <div class="mb-2">
-            <span class="info-label">Classification :</span>
-            <span class="info-value">${data.rated || "N/A"}</span>
-          </div>
-          <div class="mb-2">
-            <span class="info-label">Score IMDB :</span>
-            <span class="info-value">${data.imdb_score !== null && data.imdb_score !== undefined ? data.imdb_score + "/10" : "N/A"}</span>
-          </div>
-          <div class="mb-2">
-            <span class="info-label">Réalisateur(s) :</span>
-            <span class="info-value">${Array.isArray(data.directors) ? data.directors.join(", ") : (data.directors || "N/A")}</span>
-          </div>
-          <div class="mb-2">
-            <span class="info-label">Acteurs :</span>
-            <span class="info-value">${Array.isArray(data.actors) ? data.actors.join(", ") : (data.actors || "N/A")}</span>
-          </div>
-          <div class="mb-2">
-            <span class="info-label">Durée :</span>
-            <span class="info-value">${data.duration ? data.duration + " min" : "N/A"}</span>
-          </div>
-          <div class="mb-2">
-            <span class="info-label">Pays :</span>
-            <span class="info-value">${Array.isArray(data.countries) ? data.countries.join(", ") : (data.countries || "N/A")}</span>
-          </div>
-          <div class="mb-2">
-            <span class="info-label">Box-office :</span>
-            <span class="info-value">${data.worldwide_gross_income || data.usa_gross_income || "N/A"}</span>
-          </div>
-        </div>
-        <div class="col-12">
-          <div class="mb-2">
-            <span class="info-label">Résumé :</span>
-          </div>
-          <p class="info-value">${data.long_description || data.description || "Aucun résumé disponible."}</p>
-        </div>
-      </div>
-    `;
-    
-    // Ouvrir la modale avec Bootstrap 5
+    document.getElementById("modal-content").innerHTML = buildMovieDetails(data);
+
     const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
     modal.show();
   } catch (error) {
@@ -284,7 +229,6 @@ function handleResize() {
     // Si le breakpoint a changé (mobile <-> tablette <-> desktop)
     // on recharge les données avec le nouveau page_size
     if (currentPageSize !== previousPageSize) {
-      console.log(`Breakpoint changé: ${previousPageSize} → ${currentPageSize}`);
       previousPageSize = currentPageSize;
       
       // Recharger les 4 sections si les handlers existent
